@@ -1,3 +1,4 @@
 INVESTIGACION SOBRE LOS OPERADORES DE JS 
 
+https://github.com/user-attachments/files/25354497/algorittms.pdf
 https://docs.google.com/document/d/1Lzzn_tXKssB_2bhUQnS3tDMWxlMQFnC43diiXx6XYqA/edit?usp=sharing
