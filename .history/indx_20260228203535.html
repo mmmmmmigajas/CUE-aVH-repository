@@ -1,0 +1,582 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>CHORD — Tienda Musical</title>
+  <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet"/>
+  <style>
+    *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+    :root {
+      --bg: #0a0a0a;
+      --surface: #141414;
+      --accent: #e8ff47;
+      --accent2: #ff5c3a;
+      --text: #f0ede6;
+      --muted: #555;
+      --border: #222;
+    }
+
+    html { scroll-behavior: smooth; }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'DM Sans', sans-serif;
+      font-weight: 300;
+      overflow-x: hidden;
+      cursor: none;
+    }
+
+    /* Custom cursor */
+    .cursor {
+      width: 12px; height: 12px;
+      background: var(--accent);
+      border-radius: 50%;
+      position: fixed;
+      top: 0; left: 0;
+      pointer-events: none;
+      z-index: 9999;
+      transition: transform 0.15s ease;
+      mix-blend-mode: difference;
+    }
+    .cursor-ring {
+      width: 36px; height: 36px;
+      border: 1px solid var(--accent);
+      border-radius: 50%;
+      position: fixed;
+      top: 0; left: 0;
+      pointer-events: none;
+      z-index: 9998;
+      transition: top 0.12s ease, left 0.12s ease, width 0.2s, height 0.2s;
+      mix-blend-mode: difference;
+    }
+
+    /* ── NAV ── */
+    nav {
+      position: fixed; top: 0; width: 100%; z-index: 100;
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 1.2rem 3rem;
+      background: rgba(10,10,10,0.85);
+      backdrop-filter: blur(12px);
+      border-bottom: 1px solid var(--border);
+    }
+    .logo {
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: 2rem; letter-spacing: 4px;
+      color: var(--accent); text-decoration: none;
+    }
+    nav ul { list-style: none; display: flex; gap: 2.5rem; }
+    nav a { color: var(--text); text-decoration: none; font-size: 0.85rem; letter-spacing: 2px; text-transform: uppercase; opacity: 0.7; transition: opacity 0.2s; }
+    nav a:hover { opacity: 1; color: var(--accent); }
+    .cart-btn {
+      background: var(--accent); color: #000;
+      border: none; padding: 0.55rem 1.4rem;
+      font-family: 'DM Sans', sans-serif; font-weight: 500;
+      font-size: 0.8rem; letter-spacing: 2px; text-transform: uppercase;
+      cursor: none; transition: background 0.2s, transform 0.15s;
+    }
+    .cart-btn:hover { background: var(--accent2); transform: scale(1.04); }
+
+    /* ── HERO ── */
+    .hero {
+      min-height: 100vh;
+      display: flex; align-items: center;
+      padding: 0 3rem;
+      position: relative;
+      overflow: hidden;
+    }
+    .hero-bg {
+      position: absolute; inset: 0;
+      background: radial-gradient(ellipse 60% 60% at 70% 50%, #1a1a00 0%, transparent 70%),
+                  radial-gradient(ellipse 40% 40% at 20% 80%, #1a0a00 0%, transparent 60%);
+    }
+    .hero-lines {
+      position: absolute; inset: 0;
+      background-image: repeating-linear-gradient(0deg, transparent, transparent 59px, #ffffff06 60px);
+    }
+    .hero-content { position: relative; z-index: 1; max-width: 700px; }
+    .hero-tag {
+      display: inline-block;
+      border: 1px solid var(--accent); color: var(--accent);
+      font-size: 0.7rem; letter-spacing: 4px; text-transform: uppercase;
+      padding: 0.3rem 0.9rem; margin-bottom: 1.5rem;
+      animation: fadeUp 0.6s ease both;
+    }
+    .hero h1 {
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: clamp(4rem, 10vw, 9rem);
+      line-height: 0.9;
+      letter-spacing: 2px;
+      animation: fadeUp 0.7s 0.1s ease both;
+    }
+    .hero h1 span { color: var(--accent); }
+    .hero p {
+      margin-top: 1.5rem; max-width: 480px;
+      color: #aaa; font-size: 1rem; line-height: 1.7;
+      animation: fadeUp 0.7s 0.2s ease both;
+    }
+    .hero-btns { display: flex; gap: 1rem; margin-top: 2.5rem; animation: fadeUp 0.7s 0.3s ease both; }
+    .btn-primary {
+      background: var(--accent); color: #000;
+      padding: 0.9rem 2.2rem; border: none;
+      font-weight: 500; font-size: 0.85rem; letter-spacing: 2px; text-transform: uppercase;
+      cursor: none; transition: transform 0.15s, background 0.2s;
+    }
+    .btn-primary:hover { transform: translateY(-3px); background: #d4eb00; }
+    .btn-outline {
+      background: transparent; color: var(--text);
+      padding: 0.9rem 2.2rem;
+      border: 1px solid var(--border);
+      font-size: 0.85rem; letter-spacing: 2px; text-transform: uppercase;
+      cursor: none; transition: border-color 0.2s, color 0.2s;
+    }
+    .btn-outline:hover { border-color: var(--accent); color: var(--accent); }
+    .hero-visual {
+      position: absolute; right: 5%; top: 50%; transform: translateY(-50%);
+      font-size: 22rem; opacity: 0.04; user-select: none;
+      animation: spin 40s linear infinite;
+    }
+
+    /* ── MARQUEE ── */
+    .marquee-strip {
+      background: var(--accent); color: #000;
+      overflow: hidden; white-space: nowrap;
+      padding: 0.7rem 0;
+    }
+    .marquee-inner {
+      display: inline-block;
+      animation: marquee 18s linear infinite;
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: 1.1rem; letter-spacing: 4px;
+    }
+    .marquee-inner span { margin: 0 2rem; }
+
+    /* ── SECTION ── */
+    section { padding: 6rem 3rem; }
+    .section-label {
+      font-size: 0.7rem; letter-spacing: 4px; text-transform: uppercase;
+      color: var(--accent); margin-bottom: 0.5rem;
+    }
+    .section-title {
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: clamp(2.5rem, 5vw, 4.5rem);
+      letter-spacing: 2px;
+    }
+
+    /* ── PRODUCTS ── */
+    .products-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+      gap: 1.5px;
+      margin-top: 3rem;
+      background: var(--border);
+    }
+    .product-card {
+      background: var(--surface);
+      padding: 2rem;
+      position: relative;
+      overflow: hidden;
+      transition: background 0.3s;
+      cursor: none;
+    }
+    .product-card:hover { background: #1c1c1c; }
+    .product-card:hover .product-action { opacity: 1; transform: translateY(0); }
+    .product-emoji { font-size: 3.5rem; display: block; margin-bottom: 1.2rem; }
+    .product-cat {
+      font-size: 0.65rem; letter-spacing: 3px; text-transform: uppercase;
+      color: var(--muted); margin-bottom: 0.4rem;
+    }
+    .product-name { font-size: 1.1rem; font-weight: 500; margin-bottom: 0.3rem; }
+    .product-price {
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: 1.6rem; letter-spacing: 1px;
+      color: var(--accent); margin-top: 0.8rem;
+    }
+    .product-action {
+      position: absolute; bottom: 1.5rem; right: 1.5rem;
+      background: var(--accent); color: #000; border: none;
+      padding: 0.5rem 1rem; font-size: 0.75rem; font-weight: 500; letter-spacing: 2px;
+      text-transform: uppercase; cursor: none;
+      opacity: 0; transform: translateY(6px);
+      transition: opacity 0.25s, transform 0.25s;
+    }
+    .badge-new {
+      position: absolute; top: 1.2rem; right: 1.2rem;
+      background: var(--accent2); color: #fff;
+      font-size: 0.6rem; letter-spacing: 2px; text-transform: uppercase;
+      padding: 0.2rem 0.5rem;
+    }
+
+    /* ── CATEGORIES ── */
+    .categories {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 1.5px;
+      margin-top: 3rem;
+      background: var(--border);
+    }
+    .cat-item {
+      background: var(--surface);
+      padding: 2.5rem 2rem;
+      text-align: center; cursor: none;
+      transition: background 0.25s;
+      position: relative; overflow: hidden;
+    }
+    .cat-item:hover { background: #1a1a00; }
+    .cat-item:hover .cat-icon { transform: scale(1.2) rotate(-5deg); }
+    .cat-icon { font-size: 3rem; display: block; margin-bottom: 1rem; transition: transform 0.3s; }
+    .cat-name { font-family: 'Bebas Neue', sans-serif; font-size: 1.3rem; letter-spacing: 2px; }
+    .cat-count { font-size: 0.75rem; color: var(--muted); margin-top: 0.3rem; }
+
+    /* ── PROMO BANNER ── */
+    .promo {
+      background: var(--accent);
+      color: #000;
+      padding: 5rem 3rem;
+      display: flex; align-items: center; justify-content: space-between;
+      gap: 2rem; flex-wrap: wrap;
+    }
+    .promo-text { font-family: 'Bebas Neue', sans-serif; font-size: clamp(2rem, 5vw, 4rem); letter-spacing: 2px; }
+    .promo-text em { color: var(--bg); font-style: normal; }
+    .btn-dark {
+      background: #000; color: var(--accent);
+      padding: 1rem 2.5rem; border: none;
+      font-size: 0.85rem; letter-spacing: 2px; text-transform: uppercase; font-weight: 500;
+      cursor: none; transition: background 0.2s;
+      white-space: nowrap;
+    }
+    .btn-dark:hover { background: #1a1a1a; }
+
+    /* ── TESTIMONIALS ── */
+    .testimonials-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+      gap: 1.5px;
+      margin-top: 3rem;
+      background: var(--border);
+    }
+    .testimonial {
+      background: var(--surface); padding: 2rem;
+    }
+    .stars { color: var(--accent); font-size: 0.9rem; margin-bottom: 1rem; }
+    .testimonial p { color: #aaa; line-height: 1.7; font-size: 0.95rem; }
+    .testimonial-author { margin-top: 1.2rem; font-weight: 500; font-size: 0.85rem; }
+    .testimonial-role { font-size: 0.75rem; color: var(--muted); }
+
+    /* ── NEWSLETTER ── */
+    .newsletter {
+      display: flex; flex-direction: column; align-items: center;
+      text-align: center; padding: 6rem 3rem;
+      border-top: 1px solid var(--border);
+    }
+    .newsletter .section-title { margin-top: 0.5rem; }
+    .newsletter p { color: #aaa; max-width: 500px; margin-top: 1rem; line-height: 1.7; }
+    .newsletter-form {
+      display: flex; gap: 0; margin-top: 2.5rem;
+      width: 100%; max-width: 480px;
+    }
+    .newsletter-form input {
+      flex: 1; background: var(--surface); border: 1px solid var(--border);
+      border-right: none; color: var(--text);
+      padding: 0.9rem 1.2rem; font-family: 'DM Sans', sans-serif; font-size: 0.9rem;
+      outline: none;
+    }
+    .newsletter-form input:focus { border-color: var(--accent); }
+    .newsletter-form button {
+      background: var(--accent); color: #000; border: none;
+      padding: 0.9rem 1.8rem; font-weight: 500; font-size: 0.8rem; letter-spacing: 2px;
+      text-transform: uppercase; cursor: none; transition: background 0.2s;
+    }
+    .newsletter-form button:hover { background: #d4eb00; }
+
+    /* ── FOOTER ── */
+    footer {
+      border-top: 1px solid var(--border);
+      padding: 3rem;
+      display: flex; justify-content: space-between; align-items: center;
+      flex-wrap: wrap; gap: 1.5rem;
+    }
+    footer .logo { font-size: 1.5rem; }
+    footer p { color: var(--muted); font-size: 0.8rem; }
+    .footer-links { display: flex; gap: 2rem; }
+    .footer-links a { color: var(--muted); text-decoration: none; font-size: 0.8rem; letter-spacing: 1px; transition: color 0.2s; }
+    .footer-links a:hover { color: var(--accent); }
+
+    /* ── CART TOAST ── */
+    .toast {
+      position: fixed; bottom: 2rem; right: 2rem;
+      background: var(--accent); color: #000;
+      padding: 1rem 1.8rem;
+      font-weight: 500; font-size: 0.85rem;
+      z-index: 1000; transform: translateY(100px); opacity: 0;
+      transition: transform 0.3s, opacity 0.3s;
+    }
+    .toast.show { transform: translateY(0); opacity: 1; }
+
+    /* ── ANIMATIONS ── */
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(24px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    @keyframes marquee {
+      from { transform: translateX(0); }
+      to { transform: translateX(-50%); }
+    }
+    @keyframes spin {
+      from { transform: translateY(-50%) rotate(0deg); }
+      to { transform: translateY(-50%) rotate(360deg); }
+    }
+
+    /* ── RESPONSIVE ── */
+    @media (max-width: 768px) {
+      nav { padding: 1rem 1.5rem; }
+      nav ul { display: none; }
+      section { padding: 4rem 1.5rem; }
+      .hero { padding: 0 1.5rem; }
+      .hero h1 { font-size: 4.5rem; }
+      .hero-visual { display: none; }
+      .categories { grid-template-columns: repeat(2, 1fr); }
+      footer { flex-direction: column; text-align: center; }
+    }
+  </style>
+</head>
+<body>
+
+  <div class="cursor" id="cursor"></div>
+  <div class="cursor-ring" id="cursorRing"></div>
+
+  <!-- NAV -->
+  <nav>
+    <a class="logo" href="#">CHORD</a>
+    <ul>
+      <li><a href="#productos">Productos</a></li>
+      <li><a href="#categorias">Categorías</a></li>
+      <li><a href="#nosotros">Nosotros</a></li>
+    </ul>
+    <button class="cart-btn" id="cartBtn">🛒 Carrito (<span id="cartCount">0</span>)</button>
+  </nav>
+
+  <!-- HERO -->
+  <section class="hero">
+    <div class="hero-bg"></div>
+    <div class="hero-lines"></div>
+    <div class="hero-content">
+      <span class="hero-tag">Nueva Colección 2025</span>
+      <h1>SIENTE<br><span>EL</span><br>RITMO</h1>
+      <p>Instrumentos para músicos que se toman en serio su arte. Desde guitarras de luthier hasta sintetizadores modulares.</p>
+      <div class="hero-btns">
+        <button class="btn-primary" onclick="scrollTo('productos')">Ver catálogo</button>
+        <button class="btn-outline" onclick="scrollTo('categorias')">Explorar</button>
+      </div>
+    </div>
+    <div class="hero-visual">🎸</div>
+  </section>
+
+  <!-- MARQUEE -->
+  <div class="marquee-strip">
+    <div class="marquee-inner">
+      <span>GUITARRAS</span><span>•</span>
+      <span>PIANOS</span><span>•</span>
+      <span>BATERÍAS</span><span>•</span>
+      <span>BAJOS</span><span>•</span>
+      <span>SINTETIZADORES</span><span>•</span>
+      <span>ACCESORIOS</span><span>•</span>
+      <span>AMPLIFICADORES</span><span>•</span>
+      <span>GUITARRAS</span><span>•</span>
+      <span>PIANOS</span><span>•</span>
+      <span>BATERÍAS</span><span>•</span>
+      <span>BAJOS</span><span>•</span>
+      <span>SINTETIZADORES</span><span>•</span>
+      <span>ACCESORIOS</span><span>•</span>
+      <span>AMPLIFICADORES</span><span>•</span>
+    </div>
+  </div>
+
+  <!-- CATEGORÍAS -->
+  <section id="categorias">
+    <div class="section-label">Explorar</div>
+    <div class="section-title">CATEGORÍAS</div>
+    <div class="categories">
+      <div class="cat-item">
+        <span class="cat-icon">🎸</span>
+        <div class="cat-name">Guitarras</div>
+        <div class="cat-count">48 productos</div>
+      </div>
+      <div class="cat-item">
+        <span class="cat-icon">🥁</span>
+        <div class="cat-name">Percusión</div>
+        <div class="cat-count">32 productos</div>
+      </div>
+      <div class="cat-item">
+        <span class="cat-icon">🎹</span>
+        <div class="cat-name">Teclados</div>
+        <div class="cat-count">24 productos</div>
+      </div>
+      <div class="cat-item">
+        <span class="cat-icon">🎷</span>
+        <div class="cat-name">Vientos</div>
+        <div class="cat-count">19 productos</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- PRODUCTOS -->
+  <section id="productos" style="padding-top:0">
+    <div class="section-label">Destacados</div>
+    <div class="section-title">PRODUCTOS</div>
+    <div class="products-grid" id="productsGrid"></div>
+  </section>
+
+  <!-- PROMO BANNER -->
+  <div class="promo">
+    <div class="promo-text">ENVÍO GRATIS<br>EN PEDIDOS <em>+$500</em></div>
+    <button class="btn-dark" onclick="scrollTo('productos')">Aprovechar oferta</button>
+  </div>
+
+  <!-- TESTIMONIALS -->
+  <section>
+    <div class="section-label">Reseñas</div>
+    <div class="section-title">LO QUE DICEN</div>
+    <div class="testimonials-grid">
+      <div class="testimonial">
+        <div class="stars">★★★★★</div>
+        <p>La guitarra llegó perfectamente embalada y con una afinación impecable. El servicio al cliente es de otro nivel.</p>
+        <div class="testimonial-author">Carlos M.</div>
+        <div class="testimonial-role">Guitarrista profesional</div>
+      </div>
+      <div class="testimonial">
+        <div class="stars">★★★★★</div>
+        <p>Compré mi primer teclado aquí y me asesoraron muy bien. Precios justos y entrega rapidísima.</p>
+        <div class="testimonial-author">Laura V.</div>
+        <div class="testimonial-role">Estudiante de música</div>
+      </div>
+      <div class="testimonial">
+        <div class="stars">★★★★☆</div>
+        <p>Gran selección de instrumentos. Encontré el bajo que buscaba hace meses. Totalmente recomendado.</p>
+        <div class="testimonial-author">Diego R.</div>
+        <div class="testimonial-role">Bajista de estudio</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- NEWSLETTER -->
+  <div class="newsletter">
+    <div class="section-label">Comunidad</div>
+    <div class="section-title">MANTENTE EN RITMO</div>
+    <p>Recibe novedades, ofertas exclusivas y contenido musical directo en tu bandeja de entrada.</p>
+    <form class="newsletter-form" onsubmit="handleNewsletter(event)">
+      <input type="email" placeholder="tu@email.com" required />
+      <button type="submit">Suscribir</button>
+    </form>
+  </div>
+
+  <!-- FOOTER -->
+  <footer>
+    <a class="logo" href="#">CHORD</a>
+    <p>© 2025 Chord Tienda Musical. Todos los derechos reservados.</p>
+    <div class="footer-links">
+      <a href="#">Políticas</a>
+      <a href="#">Contacto</a>
+      <a href="#">Instagram</a>
+    </div>
+  </footer>
+
+  <!-- TOAST -->
+  <div class="toast" id="toast"></div>
+
+  <script>
+    // ── DATA ──
+    const products = [
+      { id:1, name:'Fender Stratocaster', cat:'Guitarra Eléctrica', price:'$1,299', emoji:'🎸', isNew:true },
+      { id:2, name:'Roland FP-90X', cat:'Piano Digital', price:'$2,499', emoji:'🎹', isNew:false },
+      { id:3, name:'Ludwig Classic', cat:'Batería Acústica', price:'$1,850', emoji:'🥁', isNew:true },
+      { id:4, name:'Gibson Les Paul', cat:'Guitarra Eléctrica', price:'$2,100', emoji:'🎸', isNew:false },
+      { id:5, name:'Moog Minimoog', cat:'Sintetizador', price:'$3,699', emoji:'🎛️', isNew:true },
+      { id:6, name:'Yamaha Alto Sax', cat:'Saxofón', price:'$890', emoji:'🎷', isNew:false },
+      { id:7, name:'Fender Precision Bass', cat:'Bajo Eléctrico', price:'$1,100', emoji:'🎸', isNew:false },
+      { id:8, name:'Shure SM7B', cat:'Micrófono', price:'$399', emoji:'🎤', isNew:false },
+    ];
+
+    // ── RENDER PRODUCTS ──
+    const grid = document.getElementById('productsGrid');
+    products.forEach(p => {
+      const card = document.createElement('div');
+      card.className = 'product-card';
+      card.innerHTML = `
+        ${p.isNew ? '<span class="badge-new">Nuevo</span>' : ''}
+        <span class="product-emoji">${p.emoji}</span>
+        <div class="product-cat">${p.cat}</div>
+        <div class="product-name">${p.name}</div>
+        <div class="product-price">${p.price}</div>
+        <button class="product-action" onclick="addToCart('${p.name}')">+ Agregar</button>
+      `;
+      grid.appendChild(card);
+    });
+
+    // ── CART ──
+    let cartCount = 0;
+    function addToCart(name) {
+      cartCount++;
+      document.getElementById('cartCount').textContent = cartCount;
+      showToast(`✓ "${name}" agregado al carrito`);
+    }
+
+    // ── TOAST ──
+    let toastTimer;
+    function showToast(msg) {
+      const t = document.getElementById('toast');
+      t.textContent = msg;
+      t.classList.add('show');
+      clearTimeout(toastTimer);
+      toastTimer = setTimeout(() => t.classList.remove('show'), 2800);
+    }
+
+    // ── NEWSLETTER ──
+    function handleNewsletter(e) {
+      e.preventDefault();
+      showToast('🎵 ¡Suscripción exitosa! Bienvenido a CHORD.');
+      e.target.reset();
+    }
+
+    // ── SCROLL HELPER ──
+    function scrollTo(id) {
+      document.getElementById(id)?.scrollIntoView({ behavior:'smooth' });
+    }
+
+    // ── CUSTOM CURSOR ──
+    const cursor = document.getElementById('cursor');
+    const ring = document.getElementById('cursorRing');
+    let mx = 0, my = 0;
+    document.addEventListener('mousemove', e => {
+      mx = e.clientX; my = e.clientY;
+      cursor.style.left = (mx - 6) + 'px';
+      cursor.style.top  = (my - 6) + 'px';
+      ring.style.left   = (mx - 18) + 'px';
+      ring.style.top    = (my - 18) + 'px';
+    });
+    document.querySelectorAll('button, a, .product-card, .cat-item').forEach(el => {
+      el.addEventListener('mouseenter', () => { cursor.style.transform = 'scale(2)'; ring.style.width = '60px'; ring.style.height = '60px'; ring.style.marginLeft = '-12px'; ring.style.marginTop = '-12px'; });
+      el.addEventListener('mouseleave', () => { cursor.style.transform = 'scale(1)'; ring.style.width = '36px'; ring.style.height = '36px'; ring.style.marginLeft = '0'; ring.style.marginTop = '0'; });
+    });
+
+    // ── SCROLL REVEAL ──
+    const observer = new IntersectionObserver(entries => {
+      entries.forEach(e => {
+        if(e.isIntersecting) {
+          e.target.style.opacity = '1';
+          e.target.style.transform = 'translateY(0)';
+        }
+      });
+    }, { threshold: 0.1 });
+
+    document.querySelectorAll('.product-card, .cat-item, .testimonial').forEach(el => {
+      el.style.opacity = '0';
+      el.style.transform = 'translateY(20px)';
+      el.style.transition = 'opacity 0.5s ease, transform 0.5s ease, background 0.3s';
+      observer.observe(el);
+    });
+  </script>
+</body>
+</html>
